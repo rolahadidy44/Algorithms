@@ -1,4 +1,4 @@
-from huffmancompressiontool.huffman.app import run_gui
+from gui.app import launch_gui
 
 if __name__ == "__main__":
-    run_gui()
+    launch_gui()
