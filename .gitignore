@@ -1,0 +1,9 @@
+huffmancompressiontool/.python-version
+*.pyc
+*.py
+Project/bin/activate
+*.csh
+Project/bin/activate.fish
+*.ps1
+Project/bin/f2py
+/Project
