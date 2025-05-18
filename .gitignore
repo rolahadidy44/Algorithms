@@ -1,6 +1,6 @@
 huffmancompressiontool/.python-version
 *.pyc
-*.py
+
 Project/bin/activate
 *.csh
 Project/bin/activate.fish
