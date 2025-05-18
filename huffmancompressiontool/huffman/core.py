@@ -41,12 +41,25 @@ def generate_huffman_codes(node, code="", huffman_codes={}):
     return huffman_codes
      
 
-def encode_string():
-    pass
+def encode_string(string, huffman_codes):
+    encoded_string=""
+    for c in string:
+        encoded_string+=huffman_codes[c]
+    return encoded_string
+    
 
-def decode_sting():
-    pass
-
+def decode_string(encoded_string, huffman_codes):
+    decoded_string=""
+    reversed_codes = {v: k for k, v in huffman_codes.items()}
+    prefix=""
+    for c in encoded_string:
+        prefix+=c
+        if prefix  in reversed_codes:
+            decoded_string+=reversed_codes[prefix]
+            prefix=""
+        
+    
+    return decoded_string
 
 def count_frequency(string):
     freq_dict={}
@@ -70,10 +83,14 @@ def main():
     user_input=input()
     freq_dict=count_frequency(user_input)
     root=build_huffman_tree(freq_dict)
-    
     huffman_codes=generate_huffman_codes(root)
+    
     for char, code in huffman_codes.items():
         print(f"Character: {char}, Code: {code}")
+        
+    endcoded_string=encode_string(user_input,huffman_codes)
+    print("kok ",endcoded_string)
+    print("decoded ", decode_string(endcoded_string,huffman_codes))
 
 if __name__ =="__main__":
     main()

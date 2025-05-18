@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from huffman.core import count_frequency, build_huffman_tree, generate_huffman_codes
+from huffman.core import count_frequency, build_huffman_tree, generate_huffman_codes, encode_string, decode_string
 from huffman.visualizer import draw_huffman_tree 
 # Colors
 PASTEL_ORANGE = "#FFD1A4"
@@ -13,14 +13,27 @@ def submit_text():
     freq_dict = count_frequency(input_text)
     root = build_huffman_tree(freq_dict)
     huffman_codes = generate_huffman_codes(root)
+    encoded = encode_string(input_text, huffman_codes)
+    decoded = decode_string(encoded, huffman_codes)
 
     output_text.config(state="normal")
     output_text.delete("1.0", tk.END)
 
+   
+    output_text.insert(tk.END, "Character Frequencies:\n")
+    for char, freq in freq_dict.items():
+        output_text.insert(tk.END, f"{repr(char)}: {freq}\n")
+
+    output_text.insert(tk.END, "\nHuffman Codes:\n")
     for char, code in huffman_codes.items():
-        output_text.insert(tk.END, f"Character: {repr(char)} | Code: {code}\n")
+        output_text.insert(tk.END, f"{repr(char)}: {code}\n")
+
+    output_text.insert(tk.END, f"\nEncoded String:\n{encoded}\n")
+    output_text.insert(tk.END, f"\nDecoded String:\n{decoded}\n")
+
     draw_huffman_tree(root) 
     output_text.config(state="disabled")
+
 
 window = tk.Tk()
 window.title("Huffman Compression Tool 💨")
