@@ -92,6 +92,8 @@ class GraphAnimator:
             for v in self.G.neighbors(start):
                 queue.append((self.G[start][v]['weight'], start, v))
             queue.sort()
+            self._draw_graph(mst_edges, list(visited), queue, [], total_weight)
+
 
             while queue:
                 w, u, v = queue.pop(0)
