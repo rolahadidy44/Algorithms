@@ -1,71 +1,101 @@
 import tkinter as tk
 from tkinter import ttk
 from huffman.core import count_frequency, build_huffman_tree, generate_huffman_codes, encode_string, decode_string
-from huffman.visualizer import draw_huffman_tree 
-# Colors
+from huffman.visualizer import HuffmanVisualizer
+
 PASTEL_ORANGE = "#FFD1A4"
 PASTEL_PINK = "#FFC9DE"
-PASTEL_BLUE = "#D0E8FF"
-TEXT_COLOR = "#333333"
+PASTEL_PURPLE = "#8624CB"
 
-def submit_text():
-    input_text = entry.get()
-    freq_dict = count_frequency(input_text)
-    root = build_huffman_tree(freq_dict)
-    huffman_codes = generate_huffman_codes(root)
-    encoded = encode_string(input_text, huffman_codes)
-    decoded = decode_string(encoded, huffman_codes)
+class HuffmanApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Huffman Compression Tool 💨")
+        self.root.geometry("760x600")
+        self.root.configure(bg=PASTEL_PINK)
+        self.root.rowconfigure(0, weight=1)
+        self.root.columnconfigure(0, weight=1)
 
-    output_text.config(state="normal")
-    output_text.delete("1.0", tk.END)
+        self.main_menu = tk.Frame(root, bg=PASTEL_PINK)
+        self.result_screen = tk.Frame(root, bg=PASTEL_PINK)
+        for frame in (self.main_menu, self.result_screen):
+            frame.grid(row=0, column=0, sticky="nsew")
 
-   
-    output_text.insert(tk.END, "Character Frequencies:\n")
-    for char, freq in freq_dict.items():
-        output_text.insert(tk.END, f"{repr(char)}: {freq}\n")
+        self.setup_main_menu()
+        self.setup_result_screen()
+        self.show_frame(self.main_menu)
 
-    output_text.insert(tk.END, "\nHuffman Codes:\n")
-    for char, code in huffman_codes.items():
-        output_text.insert(tk.END, f"{repr(char)}: {code}\n")
+    def setup_main_menu(self):
+        for i in range(3):
+            self.main_menu.rowconfigure(i, weight=1)
+        self.main_menu.columnconfigure(0, weight=1)
 
-    output_text.insert(tk.END, f"\nEncoded String:\n{encoded}\n")
-    output_text.insert(tk.END, f"\nDecoded String:\n{decoded}\n")
+        label = ttk.Label(self.main_menu, text="Enter text to compress:", background=PASTEL_PINK, font=("Helvetica", 14))
+        label.grid(row=0, column=0, pady=(80, 10))
 
-    draw_huffman_tree(root) 
-    output_text.config(state="disabled")
+        self.entry = ttk.Entry(self.main_menu, width=50, font=("Helvetica", 12))
+        self.entry.grid(row=1, column=0, ipady=6)
+
+        submit_btn = ttk.Button(self.main_menu, text="Generate Huffman Codes", command=self.submit_text)
+        submit_btn.grid(row=2, column=0, pady=(10, 80), ipadx=8, ipady=4)
+
+    def setup_result_screen(self):
+        top_frame = tk.Frame(self.result_screen, bg=PASTEL_PINK)
+        top_frame.pack(fill="x", padx=20, pady=(10, 0))
+
+        self.freq_label = tk.Label(top_frame, justify="left", anchor="nw",
+                                   font=("Courier New", 9), fg=PASTEL_PURPLE, bg=PASTEL_PINK)
+        self.freq_label.grid(row=0, column=0, sticky="nw")
+
+        self.code_label = tk.Label(top_frame, justify="left", anchor="nw",
+                                   font=("Courier New", 9), fg=PASTEL_PURPLE, bg=PASTEL_PINK)
+        self.code_label.grid(row=0, column=1, sticky="nw", padx=(40, 0))
+
+        self.enc_label = tk.Label(top_frame, justify="center", anchor="center",
+                                  font=("Courier New", 9), fg=PASTEL_PURPLE, bg=PASTEL_PINK)
+        self.enc_label.grid(row=0, column=2, padx=(40, 0), sticky="n")
+
+        self.canvas_frame = tk.Frame(self.result_screen, bg=PASTEL_PINK)
+        self.canvas_frame.pack(fill="both", expand=True, padx=20, pady=(10, 0))
+
+        back_btn = ttk.Button(self.result_screen, text="⬅ Back to Main Menu", command=lambda: self.show_frame(self.main_menu))
+        back_btn.pack(padx=10, pady=10, anchor="sw")
+
+    def submit_text(self):
+        input_text = self.entry.get()
+        freq_dict = count_frequency(input_text)
+        root = build_huffman_tree(freq_dict)
+        huffman_codes = generate_huffman_codes(root)
+        encoded = encode_string(input_text, huffman_codes)
+        decoded = decode_string(encoded, huffman_codes)
+
+        freq_text = "Character Frequencies:\n"
+        for char, freq in freq_dict.items():
+            freq_text += f"{repr(char)}: {freq}\n"
+
+        code_text = "Huffman Codes:\n"
+        for char, code in huffman_codes.items():
+            code_text += f"{repr(char)}: {code}\n"
+
+        encoded_decoded = f"Encoded: {encoded}\n\nDecoded: {decoded}"
+
+        self.freq_label.config(text=freq_text)
+        self.code_label.config(text=code_text)
+        self.enc_label.config(text=encoded_decoded)
+
+        self.canvas_frame.destroy()
+        self.canvas_frame = tk.Frame(self.result_screen, bg=PASTEL_PINK)
+        self.canvas_frame.pack(fill="both", expand=True, padx=20, pady=(10, 0))
+        visualizer = HuffmanVisualizer(root, self.canvas_frame, fig_size=(3.5, 1.8), node_size=600, font_size=7, speed_ms=750)
+        self.root.after(100, visualizer.animate)
+
+        self.show_frame(self.result_screen)
+
+    def show_frame(self, frame):
+        frame.tkraise()
 
 
-window = tk.Tk()
-window.title("Huffman Compression Tool 💨")
-window.geometry("550x520")
-window.configure(bg=PASTEL_PINK)
-
- 
-style = ttk.Style()
-style.theme_use("clam")
-
-style.configure("TLabel", font=("Helvetica", 13), background=PASTEL_PINK, foreground=TEXT_COLOR)
-style.configure("TEntry", font=("Helvetica", 12))
-style.configure("TButton", font=("Helvetica", 12), padding=6, background=PASTEL_ORANGE)
-
-# Label
-entry_label = ttk.Label(window, text="Enter text to compress:")
-entry_label.pack(pady=(20, 5))
-
-# Entry
-entry = ttk.Entry(window, width=50)
-entry.pack(pady=(0, 10))
-
-# Button
-submit_button = ttk.Button(window, text="Generate Huffman Codes", command=submit_text)
-submit_button.pack(pady=(0, 20))
-
-# Output
-output_frame = tk.Frame(window, bg=PASTEL_BLUE, bd=2, relief="ridge")
-output_frame.pack(pady=(0, 20), padx=10)
-
-output_text = tk.Text(output_frame, height=15, width=60, font=("Courier New", 11), wrap="word", bg=PASTEL_BLUE, fg=TEXT_COLOR, relief="flat")
-output_text.pack()
-output_text.config(state="disabled")
-
-window.mainloop()
+def launch_gui():
+    root = tk.Tk()
+    app = HuffmanApp(root)
+    root.mainloop()
