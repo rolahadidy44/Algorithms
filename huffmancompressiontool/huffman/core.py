@@ -29,7 +29,9 @@ def build_huffman_tree(freq_dict):
         
     
 
-def generate_huffman_codes(node, code="", huffman_codes={}):
+def generate_huffman_codes(node, code="", huffman_codes=None):
+    if huffman_codes is None:
+        huffman_codes = {}
         
     if node is not None:
         if node.character is not None:

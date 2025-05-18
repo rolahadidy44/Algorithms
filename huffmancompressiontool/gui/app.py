@@ -96,7 +96,7 @@ class HuffmanApp:
             widget.destroy()
         for widget in self.char_buttons_frame.winfo_children():
             widget.destroy()
-
+        self.char_buttons.clear()
         visualizer = HuffmanVisualizer(root, self.canvas_frame, self.huffman_codes, fig_size=(3.5, 1.8), node_size=600, font_size=7, speed_ms=500)
         self.root.after(100, visualizer.animate_build)
 
