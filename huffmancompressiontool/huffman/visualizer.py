@@ -4,11 +4,14 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time
 
 class HuffmanVisualizer:
-    def __init__(self, root, canvas_frame, fig_size=(3.5, 1.8), node_size=600, font_size=7, speed_ms=750):
-        self.root_node = root
+    def __init__(self, root_node, canvas_frame, huffman_codes, fig_size=(3.5, 1.8), node_size=600, font_size=7, speed_ms=750):
+        self.root_node = root_node
         self.canvas_frame = canvas_frame
+        self.huffman_codes = huffman_codes
         self.visited = set()
         self.current_node = None
+        self.node_map = {}
+        self.arrow_labels = {}
         self.fig, self.ax = plt.subplots(figsize=fig_size)
         self.node_size = node_size
         self.font_size = font_size
@@ -16,23 +19,37 @@ class HuffmanVisualizer:
         self.G = nx.DiGraph()
         self.pos = {}
         self.labels = {}
-        self._build_graph(self.root_node)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.canvas_frame)
         self.canvas_widget = self.canvas.get_tk_widget()
         self.canvas_widget.pack(fill="both", expand=True)
+        self._build_graph(self.root_node)  # Layout remains fixed from start
 
     def _build_graph(self, node, x=0, y=0, layer=2.0):
         if node is None:
             return
         node_id = id(node)
+        char_label = node.character if node.character else self._get_combined_label(node)
+        self.labels[node_id] = f"{char_label}\n{node.freq}"
         self.pos[node_id] = (x, -y)
-        self.labels[node_id] = f"{node.character if node.character else ''}\n{node.freq}"
+        if node.character:
+            self.node_map[node.character] = node_id
         if node.left:
             self.G.add_edge(node_id, id(node.left))
+            self.arrow_labels[(node_id, id(node.left))] = '0'
             self._build_graph(node.left, x - 1 / layer, y + 1, layer * 2.0)
         if node.right:
             self.G.add_edge(node_id, id(node.right))
+            self.arrow_labels[(node_id, id(node.right))] = '1'
             self._build_graph(node.right, x + 1 / layer, y + 1, layer * 2.0)
+
+    def _get_combined_label(self, node):
+        def gather_chars(n):
+            if not n:
+                return ""
+            if n.character:
+                return n.character
+            return gather_chars(n.left) + gather_chars(n.right)
+        return f"({gather_chars(node.left)}+{gather_chars(node.right)})"
 
     def _draw(self):
         self.ax.clear()
@@ -44,22 +61,52 @@ class HuffmanVisualizer:
                 node_colors.append("grey")
             else:
                 node_colors.append("#FFE4B5")
+
         nx.draw(self.G, self.pos, with_labels=False, arrows=False, node_size=self.node_size,
                 node_color=node_colors, ax=self.ax)
         nx.draw_networkx_labels(self.G, self.pos, self.labels, ax=self.ax, font_size=self.font_size)
+        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels=self.arrow_labels, font_color='black', ax=self.ax)
         self.ax.set_axis_off()
         self.canvas.draw()
 
-    def animate(self):
-        def traverse(node):
+    def animate_build(self):
+        def postorder(node):
             if node is None:
-                return
+                return []
+            return postorder(node.left) + postorder(node.right) + [node]
+
+        nodes_in_order = postorder(self.root_node)
+        self.visited.clear()
+        for node in nodes_in_order:
             node_id = id(node)
             self.current_node = node_id
+            self.visited.add(node_id)
             self._draw()
             self.canvas_frame.update()
             time.sleep(self.speed_ms / 1000)
+
+        self.current_node = None
+        self._draw()
+
+    def highlight_encoding_path(self, char):
+        code = self.huffman_codes.get(char)
+        if not code:
+            return
+
+        node = self.root_node
+        path = []
+        for bit in code:
+            path.append(id(node))
+            node = node.left if bit == '0' else node.right
+        path.append(id(node))
+
+        self.visited.clear()
+        for node_id in path:
+            self.current_node = node_id
             self.visited.add(node_id)
-            traverse(node.left)
-            traverse(node.right)
-        traverse(self.root_node)
+            self._draw()
+            self.canvas_frame.update()
+            time.sleep(self.speed_ms / 1000)
+
+        self.current_node = None
+        self._draw()
